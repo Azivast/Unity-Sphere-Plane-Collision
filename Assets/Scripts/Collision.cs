@@ -5,6 +5,7 @@ using System.Numerics;
 using UnityEditor;
 using UnityEngine;
 using Vectors;
+using Plane = UnityEngine.Plane;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
@@ -15,14 +16,17 @@ public class Collision : MonoBehaviour
     // Input variables
     public Vector3 ballDirection = new Vector3(3, 0, 0);
     public float ballRadius = 1;
-    public Vector3 ballPosition = new Vector3(10, 10 ,3);
+    public Vector3 ballPosition = new Vector3(-5, 5, 0);
 
     public Vector3 planeNormal = new Vector3(0.3f, 1, 0);
-    public Vector3 planeDistance = new Vector3(0, 1, 0);
+    public float planeDistance;
     
     // Other Variables
     [NonSerialized] 
     private VectorRenderer vectors;
+    public Transform ball;
+    public Transform plane;
+    
 
     public Vector3 newBallPosition;
     public Vector3 impact;
@@ -37,7 +41,6 @@ public class Collision : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ballDirection.Normalize();
     }
     
     void OnEnable() {
@@ -47,17 +50,31 @@ public class Collision : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Update user input
+        ballPosition = ball.position;
+        ballRadius = ball.localScale.x/2;
+        planeNormal = plane.up;
+        planeDistance = -plane.position.y; // TODO: Fix breaking when moving
+        planeNormal.Normalize();
+        ballDirection.Normalize();
+
         CalculateBounce();
+        
+        // Illustrate vectors
         using (vectors.Begin())
         {
             vectors.Draw(ballPosition, ballPosition+ballDirection, Color.red);
-            vectors.Draw(Vector3.zero, planeNormal, Color.green);
+            vectors.Draw(plane.position, plane.position+planeNormal, Color.green);
             
             vectors.Draw(ballPosition, impact, Color.magenta);
             vectors.Draw(impact, impact-aVec, Color.yellow);
             vectors.Draw(impact-aVec, impact-aVec-aVec, Color.yellow);
             vectors.Draw(impact-aVec-aVec, impact-aVec-aVec+bVec, Color.yellow);
             vectors.Draw(impact, newBallPosition, Color.magenta);
+            
+            vectors.Draw(ballPosition+aDir*ballRadius, ballPosition+aVec, Color.white);
+            vectors.Draw(ballPosition, ballPosition+aDir*ballRadius, Color.white);
+            //vectors.Draw(planeDistance, ballPosition+planeDistance+aDir*ballRadius, Color.white);
         }
 
     }
@@ -76,7 +93,7 @@ public class Collision : MonoBehaviour
             ballPosition.x * planeNormal.x +
             ballPosition.y * planeNormal.y +
             ballPosition.z * planeNormal.z;    // dot product
-        aLength -= ballRadius - planeDistance.magnitude;
+        aLength -= ballRadius - planeDistance;
         aDir = -planeNormal;
         aVec = aLength * aDir;
 
@@ -104,15 +121,11 @@ public class ExampleGUI : Editor {
         if (ex == null) return;
 
         EditorGUI.BeginChangeCheck();
-        var a = Handles.PositionHandle(ex.ballPosition, Quaternion.identity);
-        var b = Handles.PositionHandle(ex.impact, Quaternion.identity);
-        var c = Handles.PositionHandle(ex.newBallPosition, Quaternion.identity);
+        var a = Handles.PositionHandle(ex.ballDirection, Quaternion.identity);
 
         if (EditorGUI.EndChangeCheck()) {
             Undo.RecordObject(target, "Vector Positions");
-            ex.ballPosition = a;
-            ex.impact = b;
-            ex.newBallPosition = c;
+            ex.ballDirection = a;
             EditorUtility.SetDirty(target);
         }
     }
