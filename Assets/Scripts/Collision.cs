@@ -15,9 +15,11 @@ public class Collision : MonoBehaviour
 {
     // Input variables
     public Vector3 ballDirection = new Vector3(3, 0, 0);
+
     public float ballRadius = 1;
     public Vector3 ballPosition = new Vector3(-5, 5, 0);
 
+    // TODO: Ska kunna ställas exakt med grader
     public Vector3 planeNormal = new Vector3(0.3f, 1, 0);
     public float planeDistance;
     
@@ -26,6 +28,8 @@ public class Collision : MonoBehaviour
     private VectorRenderer vectors;
     public Transform ball;
     public Transform plane;
+    public Transform ballImpact;
+    public Transform ballFinal;
     
 
     public Vector3 newBallPosition;
@@ -41,6 +45,7 @@ public class Collision : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        ballRadius = 1;
     }
     
     void OnEnable() {
@@ -52,13 +57,23 @@ public class Collision : MonoBehaviour
     {
         // Update user input
         ballPosition = ball.position;
-        ballRadius = ball.localScale.x/2;
         planeNormal = plane.up;
-        planeDistance = -plane.position.y; // TODO: Fix breaking when moving
+        planeDistance = plane.position.y; // TODO: Fix breaking when moving
         planeNormal.Normalize();
         ballDirection.Normalize();
+        // set scale
+        Vector3 tmp = new Vector3(ballRadius, ballRadius, ballRadius);
+        tmp = tmp / 2;
+        ball.localScale = tmp;
+        ballImpact.localScale = tmp;
+        ballFinal.localScale = tmp;
 
+        
         CalculateBounce();
+        
+        // Illustrate ball positions
+        ballImpact.position = impact;
+        ballFinal.position = newBallPosition;
         
         // Illustrate vectors
         using (vectors.Begin())
@@ -88,12 +103,12 @@ public class Collision : MonoBehaviour
         //            ---___\
         //                  ---___plane
         
-        // ||a|| = ballPosition*nHat -planeDistance -ballRadius
+        // ||a|| = ballPosition*nHat-ballRadius-planeDistance
         aLength =
             ballPosition.x * planeNormal.x +
             ballPosition.y * planeNormal.y +
-            ballPosition.z * planeNormal.z;    // dot product
-        aLength -= ballRadius - planeDistance;
+            ballPosition.z * planeNormal.z    // dot product
+            - ballRadius - planeDistance;
         aDir = -planeNormal;
         aVec = aLength * aDir;
 
