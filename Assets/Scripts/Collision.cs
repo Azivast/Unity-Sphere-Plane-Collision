@@ -13,64 +13,60 @@ using Vector3 = UnityEngine.Vector3;
 [RequireComponent(typeof(VectorRenderer))]
 public class Collision : MonoBehaviour
 {
-    // Input variables
-    public Vector3 ballDirection = new Vector3(3, 0, 0);
-
+    // User Input Variables
+    public Vector3 ballTravelDirection = new Vector3(1, -1, 0);
+    public Vector3 ballPosition;
     public float ballRadius = 1;
-    public Vector3 ballPosition = new Vector3(-5, 5, 0);
-
-    // TODO: Ska kunna ställas exakt med grader
-    public Vector3 planeNormal = new Vector3(0.3f, 1, 0);
+    
+    [Tooltip("Plane rotation in Euler degrees")]
+    public Vector3 PlaneRotation;
+    [Tooltip("Distance from plane normal to world origin")]
     public float planeDistance;
     
-    // Other Variables
+    // Internal Variables
     [NonSerialized] 
     private VectorRenderer vectors;
-    public Transform ball;
-    public Transform plane;
-    public Transform ballImpact;
-    public Transform ballFinal;
+    
+    private Transform ball;
+    private Transform plane;
+    private Transform ballImpact;
+    private Transform ballFinal;
     
 
-    public Vector3 newBallPosition;
-    public Vector3 impact;
-    public Vector3 aDir;
-    public float aLength;
-    public Vector3 aVec;
-    public Vector3 bDir;
-    public float bLength;
-    public Vector3 bVec;
+    private Vector3 newBallPosition;
+    private Vector3 impact;
+    private Vector3 aVec;
+    private Vector3 bVec;
 
 
-    // Start is called before the first frame update
+    // Fetch children
     void Start()
     {
-        ballRadius = 1;
+        ball = GameObject.Find("Ball (Initial)").transform;
+        plane = GameObject.Find("Plane").transform;
+        ballImpact = GameObject.Find("Ball (Impact)").transform;
+        ballFinal = GameObject.Find("Ball (Final)").transform;
     }
     
     void OnEnable() {
         vectors = GetComponent<VectorRenderer>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void UpdateFromUserInput()
     {
-        // Update user input
-        ballPosition = ball.position;
-        planeNormal = plane.up;
-        planeDistance = plane.position.y; // TODO: Fix breaking when moving
-        planeNormal.Normalize();
-        ballDirection.Normalize();
-        // set scale
-        Vector3 tmp = new Vector3(ballRadius, ballRadius, ballRadius);
-        tmp = tmp / 2;
-        ball.localScale = tmp;
-        ballImpact.localScale = tmp;
-        ballFinal.localScale = tmp;
+        plane.transform.rotation = Quaternion.Euler(PlaneRotation.x, PlaneRotation.y, PlaneRotation.z);
+        ball.position = ballPosition;
+        plane.position = plane.up * planeDistance;
+        ballTravelDirection.Normalize();
+        
+        Vector3 ballScale = new Vector3(ballRadius*2f, ballRadius*2f, ballRadius*2f);
+        ball.localScale = ballScale;
+        ballImpact.localScale = ballScale;
+        ballFinal.localScale = ballScale;
+    }
 
-        
-        CalculateBounce();
-        
+    private void IllustrateModel()
+    {
         // Illustrate ball positions
         ballImpact.position = impact;
         ballFinal.position = newBallPosition;
@@ -78,8 +74,8 @@ public class Collision : MonoBehaviour
         // Illustrate vectors
         using (vectors.Begin())
         {
-            vectors.Draw(ballPosition, ballPosition+ballDirection, Color.red);
-            vectors.Draw(plane.position, plane.position+planeNormal, Color.green);
+            vectors.Draw(ballPosition, ballPosition+ballTravelDirection, Color.red);
+            vectors.Draw(plane.position, plane.position+plane.up, Color.green);
             
             vectors.Draw(ballPosition, impact, Color.magenta);
             vectors.Draw(impact, impact-aVec, Color.yellow);
@@ -87,11 +83,17 @@ public class Collision : MonoBehaviour
             vectors.Draw(impact-aVec-aVec, impact-aVec-aVec+bVec, Color.yellow);
             vectors.Draw(impact, newBallPosition, Color.magenta);
             
-            vectors.Draw(ballPosition+aDir*ballRadius, ballPosition+aVec, Color.white);
-            vectors.Draw(ballPosition, ballPosition+aDir*ballRadius, Color.white);
-            //vectors.Draw(planeDistance, ballPosition+planeDistance+aDir*ballRadius, Color.white);
+            vectors.Draw(ballPosition, ballPosition+aVec, Color.black);
+            vectors.Draw(ballPosition, ballPosition+aVec.normalized*ballRadius, Color.white);
         }
+    }
 
+    // Update is called once per frame
+    void Update()
+    {
+        UpdateFromUserInput();
+        CalculateBounce();
+        IllustrateModel();
     }
 
     private void CalculateBounce()
@@ -103,45 +105,29 @@ public class Collision : MonoBehaviour
         //            ---___\
         //                  ---___plane
         
-        // ||a|| = ballPosition*nHat-ballRadius-planeDistance
-        aLength =
-            ballPosition.x * planeNormal.x +
-            ballPosition.y * planeNormal.y +
-            ballPosition.z * planeNormal.z    // dot product
-            - ballRadius - planeDistance;
-        aDir = -planeNormal;
-        aVec = aLength * aDir;
+        // Calculate a
+        // ||a|| = ballPosition*planeNormal-ballRadius-planeDistance
+        float aLength =
+            (ballPosition.x * plane.up.x +
+            ballPosition.y * plane.up.y +
+            ballPosition.z * plane.up.z)    // dot product
+            - planeDistance
+            - ballRadius;
+        Vector3 aDir = -plane.up;
+        aVec = aDir*aLength;
 
-        //  r / a = b / ballDirection.magnitude*r =>
-        //  b = ballDirection.magnitude*(r^2) / a
-        bDir = ballDirection;
+        // Calculate b
+        //  ballRadius / a = b / ballDirection.magnitude*ballRadius =>
+        //  b = ballDirection.magnitude*(ballRadius^2) / a
+        Vector3 bDir = ballTravelDirection;
         //Vector3 bDir = ballDirection * ballRadius * ballRadius / a;
-        bLength = aLength*aLength /
-                        (aVec.x * ballDirection.x +
-                        aVec.y * ballDirection.y +
-                        aVec.z * ballDirection.z);    // dot product
+        float bLength = aLength*aLength /
+                        (aVec.x * ballTravelDirection.x +
+                        aVec.y * ballTravelDirection.y +
+                        aVec.z * ballTravelDirection.z);    // dot product
         bVec = bDir * bLength;
 
         impact = ballPosition + bVec;
         newBallPosition = impact - aVec - aVec + bVec; 
-    }
-}
-
-
-// Draw Vectors
-[CustomEditor(typeof(Collision))]
-public class ExampleGUI : Editor {
-    void OnSceneGUI() {
-        var ex = target as Collision;
-        if (ex == null) return;
-
-        EditorGUI.BeginChangeCheck();
-        var a = Handles.PositionHandle(ex.ballDirection, Quaternion.identity);
-
-        if (EditorGUI.EndChangeCheck()) {
-            Undo.RecordObject(target, "Vector Positions");
-            ex.ballDirection = a;
-            EditorUtility.SetDirty(target);
-        }
     }
 }
