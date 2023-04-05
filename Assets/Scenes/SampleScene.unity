@@ -246,8 +246,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 254954846}
-  m_LocalRotation: {x: 0.107634254, y: -0.79821795, z: 0.08944749, w: 0.5858859}
-  m_LocalPosition: {x: -0.047029346, y: 0.16334076, z: -0.0028346505}
+  m_LocalRotation: {x: -0.063182294, y: -0.91592085, z: 0.060348965, w: 0.39173335}
+  m_LocalPosition: {x: -0.23960495, y: -3.4465618, z: 0.5601784}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -439,7 +439,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 914206199}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.165045, y: 5.482679, z: 4.6863804}
+  m_LocalPosition: {x: 6.726227, y: 4.410681, z: 6.1826205}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -661,8 +661,8 @@ MonoBehaviour:
   ballTravelDirection: {x: 0.5998868, y: -0.66986406, z: 0.43751353}
   ballPosition: {x: -5.14, y: 4.26, z: 0.18}
   ballRadius: 1
-  PlaneRotation: {x: -344.4, y: 252.01, z: -3.99}
-  planeDistance: 0.17
+  PlaneRotation: {x: -183.5, y: 46.6, z: -170.6}
+  planeDistance: -3.5
 --- !u!1 &1720510881
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,7 +690,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1720510881}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.9513175, y: 0.6993556, z: 2.5055916}
+  m_LocalPosition: {x: 0.36084747, y: -1.8825254, z: 4.1919155}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
